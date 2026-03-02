@@ -65,7 +65,8 @@ def _validate_historical_df(df: pd.DataFrame) -> pd.DataFrame:
         if col not in cleaned.columns:
             cleaned[col] = 0.0 if col not in {"period_end", "period_label"} else None
 
-    cleaned = cleaned.sort_values(["year", "fiscal_quarter", "period_end"]).reset_index(drop=True)
+    sort_keys = [k for k in ["year", "fiscal_quarter", "period_end"] if k in cleaned.columns]
+    cleaned = cleaned.sort_values(sort_keys).reset_index(drop=True)
     return cleaned
 
 
@@ -91,35 +92,57 @@ def _statement_value(df: pd.DataFrame, dt, key: str, default: float = 0.0) -> fl
 
 
 def _build_statement_rows(is_df: pd.DataFrame, bs_df: pd.DataFrame, cf_df: pd.DataFrame, period_type: str) -> pd.DataFrame:
+    """Build HistoricalData rows from yfinance DataFrames.
+
+    yfinance returns values in full dollars (e.g., Apple revenue = 383,285,000,000).
+    We divide by 1,000,000 to convert to $M, consistent with the CSV template and EDGAR loader.
+    Shares outstanding are also divided by 1,000,000 to express in millions of shares.
+    """
+    M = 1_000_000
     rows: list[dict] = []
     period_index = is_df.index.intersection(bs_df.index).intersection(cf_df.index)
 
     for dt in sorted(period_index):
-        revenue = _statement_value(is_df, dt, "Total Revenue")
-        cogs = abs(_statement_value(is_df, dt, "Cost Of Revenue"))
-        opex = abs(_statement_value(is_df, dt, "Operating Expense"))
-        depreciation = abs(_statement_value(cf_df, dt, "Depreciation And Amortization"))
-        interest_expense = abs(_statement_value(is_df, dt, "Interest Expense"))
-        pretax_income = _statement_value(is_df, dt, "Pretax Income")
-        tax_expense = abs(_statement_value(is_df, dt, "Tax Provision"))
+        revenue = _statement_value(is_df, dt, "Total Revenue") / M
+        if revenue <= 0:
+            continue
+
+        cogs = abs(_statement_value(is_df, dt, "Cost Of Revenue")) / M
+        opex = abs(_statement_value(is_df, dt, "Operating Expense")) / M
+        depreciation = abs(_statement_value(cf_df, dt, "Depreciation And Amortization")) / M
+        interest_expense = abs(_statement_value(is_df, dt, "Interest Expense")) / M
+        pretax_income = _statement_value(is_df, dt, "Pretax Income") / M
+        tax_expense = abs(_statement_value(is_df, dt, "Tax Provision")) / M
         tax_rate = (tax_expense / pretax_income) if pretax_income else 0.24
 
-        cash = _statement_value(bs_df, dt, "Cash And Cash Equivalents")
-        ar = _statement_value(bs_df, dt, "Accounts Receivable")
-        inventory = _statement_value(bs_df, dt, "Inventory")
-        ap = _statement_value(bs_df, dt, "Accounts Payable")
-        ppne = _statement_value(bs_df, dt, "Net PPE")
-        debt = _statement_value(bs_df, dt, "Total Debt")
-        shares = _statement_value(bs_df, dt, "Ordinary Shares Number", default=1.0)
+        cash = _statement_value(bs_df, dt, "Cash And Cash Equivalents") / M
+        ar = _statement_value(bs_df, dt, "Accounts Receivable") / M
+        inventory = _statement_value(bs_df, dt, "Inventory") / M
+        ap = _statement_value(bs_df, dt, "Accounts Payable") / M
+        ppne = _statement_value(bs_df, dt, "Net PPE") / M
+        debt = _statement_value(bs_df, dt, "Total Debt") / M
 
-        equity = (
+        # Shares: yfinance returns actual share count; divide by M to get millions
+        shares_raw = _statement_value(bs_df, dt, "Ordinary Shares Number", default=M)
+        shares = max(shares_raw / M, 1.0)
+
+        # Equity — try multiple yfinance field names
+        equity_raw = (
             _statement_value(bs_df, dt, "Stockholders Equity")
             or _statement_value(bs_df, dt, "Common Stock Equity")
             or _statement_value(bs_df, dt, "Total Equity Gross Minority Interest")
             or 0.0
         )
-        total_assets = _statement_value(bs_df, dt, "Total Assets")
-        total_liab = _statement_value(bs_df, dt, "Total Liabilities Net Minority Interest") or _statement_value(bs_df, dt, "Total Liabilities")
+        equity = equity_raw / M
+
+        total_assets = _statement_value(bs_df, dt, "Total Assets") / M
+        total_liab_raw = (
+            _statement_value(bs_df, dt, "Total Liabilities Net Minority Interest")
+            or _statement_value(bs_df, dt, "Total Liabilities")
+            or 0.0
+        )
+        total_liab = total_liab_raw / M
+
         explicit_assets = cash + ar + inventory + ppne
         explicit_liab = debt + ap
         other_assets = max(total_assets - explicit_assets, 0.0) if total_assets > 0 else 0.0
@@ -151,8 +174,8 @@ def _build_statement_rows(is_df: pd.DataFrame, bs_df: pd.DataFrame, cf_df: pd.Da
                 "accounts_payable": ap,
                 "ppne": ppne,
                 "debt": debt,
-                "shares_outstanding": max(shares, 1.0),
-                "capex": abs(_statement_value(cf_df, dt, "Capital Expenditure")),
+                "shares_outstanding": shares,
+                "capex": abs(_statement_value(cf_df, dt, "Capital Expenditure")) / M,
                 "equity": equity,
                 "other_assets": other_assets,
                 "other_liabilities": other_liabilities,
@@ -163,6 +186,24 @@ def _build_statement_rows(is_df: pd.DataFrame, bs_df: pd.DataFrame, cf_df: pd.Da
     if df.empty:
         return df
     return df[df["revenue"] > 0].reset_index(drop=True)
+
+
+def _load_quarterly_from_yfinance(ticker: str) -> pd.DataFrame:
+    """Attempt to load quarterly data from yfinance. Returns empty DataFrame on failure."""
+    try:
+        import yfinance as yf
+        tk = yf.Ticker(ticker)
+        q_is = tk.quarterly_financials.T
+        q_bs = tk.quarterly_balance_sheet.T
+        q_cf = tk.quarterly_cashflow.T
+        if q_is.empty or q_bs.empty or q_cf.empty:
+            return pd.DataFrame()
+        qdf = _build_statement_rows(q_is, q_bs, q_cf, period_type="quarterly")
+        if qdf.empty:
+            return pd.DataFrame()
+        return _validate_historical_df(qdf)
+    except Exception:
+        return pd.DataFrame()
 
 
 def _load_from_yfinance(ticker: str) -> HistoricalData:
@@ -192,7 +233,7 @@ def _load_from_yfinance(ticker: str) -> HistoricalData:
     try:
         profile = resolve_company_profile(ticker)
     except Exception:
-        profile = None
+        pass
 
     return HistoricalData(
         ticker=ticker,
@@ -204,6 +245,47 @@ def _load_from_yfinance(ticker: str) -> HistoricalData:
 
 
 def load_historical_data(ticker: str, csv_path: str | Path | None = None) -> HistoricalData:
+    """Load historical financial data for a ticker.
+
+    Load order (when no CSV is provided):
+      1. SEC EDGAR  — free, official, no API key, US-listed companies only
+      2. yfinance   — free, international coverage, fallback for non-US or EDGAR failures
+
+    All values returned in $M; shares outstanding in millions of shares.
+    """
     if csv_path:
         return _load_from_csv(csv_path, ticker=ticker)
+
+    # ── Primary: SEC EDGAR ──────────────────────────────────────────
+    try:
+        from .edgar import load_from_edgar
+
+        annual_df, entity_name, _ = load_from_edgar(ticker)
+        annual_df = _validate_historical_df(annual_df)
+
+        # Supplement with quarterly data from yfinance (EDGAR quarterly parsing is complex)
+        quarterly_df = _load_quarterly_from_yfinance(ticker)
+
+        # Market data profile (price, market cap, etc.) from market_data module
+        profile: CompanyProfile | None = None
+        try:
+            profile = resolve_company_profile(ticker)
+        except Exception:
+            pass
+
+        # If market_data failed, build a minimal profile from the EDGAR entity name
+        if profile is None:
+            profile = CompanyProfile(symbol=ticker.upper(), name=entity_name)
+
+        return HistoricalData(
+            ticker=ticker,
+            df=annual_df,
+            annual_df=annual_df,
+            quarterly_df=quarterly_df,
+            profile=profile,
+        )
+    except Exception:
+        pass
+
+    # ── Fallback: yfinance ──────────────────────────────────────────
     return _load_from_yfinance(ticker)

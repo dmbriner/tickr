@@ -299,6 +299,12 @@ h1, h2, h3, h4 {
     margin-bottom: 1.8rem;
 }
 
+/* ── Sidebar content padding (prevents left-edge clipping) ── */
+[data-testid="stSidebar"] > div:first-child {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
 /* ── Sidebar section boxes ── */
 [data-testid="stSidebar"] [data-testid="stExpander"] {
     border: 1px solid var(--line);
@@ -679,9 +685,13 @@ def _sidebar_search() -> tuple[str, bytes | None, bool]:
 
         st.divider()
         uploaded = st.file_uploader(
-            "Or upload historical CSV",
+            "Or upload custom CSV",
             type=["csv"],
-            help="CSV uploads currently support full-year rows. API-backed ticker loads support quarterly and full-year views.",
+            help=(
+                "For private companies or custom datasets only. "
+                "Public company data is pulled automatically from SEC EDGAR and Yahoo Finance — no upload needed. "
+                "See data/custom_historical_template.csv for the required column format."
+            ),
         )
         csv_bytes = uploaded.read() if uploaded else None
 
@@ -1464,8 +1474,17 @@ def main() -> None:
     try:
         hist = _load_data(ticker, csv_bytes)
     except Exception as exc:
-        st.error(f"Could not load data for {ticker}: {exc}")
-        st.info("Try a different ticker or upload a CSV.")
+        msg = str(exc)
+        st.error(f"Could not load data for **{ticker}**: {msg}")
+        if "not found in SEC EDGAR" in msg or "not a US-listed" in msg:
+            st.info(
+                "This ticker wasn't found in SEC EDGAR. If it's a US public company, "
+                "try the exact exchange symbol (e.g. BRK-B not BRKB). "
+                "For international companies, data will load via Yahoo Finance — "
+                "click **Analyze Company** again."
+            )
+        else:
+            st.info("Try a different ticker or upload a CSV with historical financials.")
         return
 
     if analyze_clicked:
