@@ -1,0 +1,322 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f6f3ee;
+  --bg-strong: #ece6dc;
+  --surface: rgba(255, 255, 255, 0.78);
+  --surface-strong: rgba(255, 255, 255, 0.92);
+  --text: #1e1c1a;
+  --muted: #6e675f;
+  --border: rgba(48, 39, 28, 0.1);
+  --shadow: 0 24px 60px rgba(46, 38, 29, 0.12);
+  --shadow-soft: 0 8px 30px rgba(46, 38, 29, 0.08);
+  --accent: #1e1c1a;
+  --accent-soft: rgba(30, 28, 26, 0.08);
+  --focus: #4f7cff;
+  --radius-xl: 24px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --transition: 180ms ease;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji";
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111111;
+    --bg-strong: #161616;
+    --surface: rgba(26, 26, 26, 0.72);
+    --surface-strong: rgba(28, 28, 28, 0.9);
+    --text: #f5f1ea;
+    --muted: #b8afa5;
+    --border: rgba(255, 255, 255, 0.08);
+    --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+    --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.18);
+    --accent: #f5f1ea;
+    --accent-soft: rgba(255, 255, 255, 0.08);
+    --focus: #8fb0ff;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(193, 182, 163, 0.35), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(151, 173, 196, 0.22), transparent 30%),
+    linear-gradient(180deg, var(--bg), var(--bg-strong));
+}
+
+a,
+button,
+input {
+  transition:
+    transform var(--transition),
+    background-color var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition),
+    opacity var(--transition);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.siteShell {
+  width: min(1120px, calc(100vw - 32px));
+  margin: 0 auto;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 28px;
+  padding: 24px 0 28px;
+}
+
+.surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.topNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+}
+
+.brand {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navLinks a,
+.navButton {
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  padding: 10px 16px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.navLinks a:hover,
+.navButton:hover {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.hero {
+  display: grid;
+  place-items: center;
+  min-height: min(72vh, 760px);
+  padding: clamp(48px, 8vw, 120px);
+  box-shadow: var(--shadow);
+}
+
+.heroInner {
+  display: grid;
+  justify-items: center;
+  gap: 28px;
+  text-align: center;
+}
+
+.hero h1,
+.authCard h1 {
+  margin: 0;
+  font-size: clamp(2.9rem, 8vw, 5.8rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+  font-weight: 700;
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 132px;
+  border-radius: var(--radius-pill);
+  padding: 14px 22px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button.primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.button.secondary {
+  background: var(--surface-strong);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.authWrap {
+  display: grid;
+  place-items: center;
+  padding: 24px 0 36px;
+}
+
+.authCard {
+  width: min(520px, 100%);
+  padding: 32px;
+  box-shadow: var(--shadow);
+}
+
+.authCard h1 {
+  font-size: clamp(2rem, 7vw, 3rem);
+  margin-bottom: 24px;
+}
+
+.formStack {
+  display: grid;
+  gap: 18px;
+}
+
+.field,
+.fieldReadout {
+  display: grid;
+  gap: 10px;
+}
+
+.field span,
+.fieldReadout span {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.field input {
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+  padding: 15px 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.field input:hover {
+  border-color: rgba(79, 124, 255, 0.28);
+}
+
+.statusText {
+  margin: 0;
+  color: var(--muted);
+}
+
+.privateState {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.inlineError {
+  margin: 0;
+  color: #b64545;
+  font-size: 0.95rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .inlineError {
+    color: #ff9d9d;
+  }
+}
+
+.siteFooter {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 4px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+@media (max-width: 720px) {
+  .siteShell {
+    width: min(100vw - 20px, 1120px);
+    gap: 20px;
+    padding-top: 12px;
+  }
+
+  .topNav {
+    padding: 14px;
+  }
+
+  .navLinks {
+    gap: 6px;
+  }
+
+  .navLinks a,
+  .navButton {
+    padding: 9px 12px;
+  }
+
+  .hero {
+    min-height: 64vh;
+    padding: 32px 20px;
+  }
+
+  .authCard {
+    padding: 24px 20px;
+  }
+
+  .buttonRow {
+    width: 100%;
+  }
+
+  .button {
+    width: 100%;
+  }
+}

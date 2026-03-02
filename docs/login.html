@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login | Tickr</title>
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
+  <body data-page="login">
+    <div class="siteShell">
+      <header class="topNav surface">
+        <a class="brand" href="./index.html">Tickr</a>
+        <nav class="navLinks" aria-label="Primary">
+          <a href="./login.html" aria-current="page">Login</a>
+          <a href="https://github.com/dmbriner/tickr" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+      </header>
+
+      <main class="authWrap">
+        <section class="authCard surface">
+          <h1>Login</h1>
+          <form id="login-form" class="formStack" novalidate>
+            <label class="field">
+              <span>Email</span>
+              <input id="email" name="email" type="email" autocomplete="email" required />
+            </label>
+            <label class="field">
+              <span>Password</span>
+              <input id="password" name="password" type="password" autocomplete="current-password" required />
+            </label>
+            <p id="login-error" class="inlineError" role="alert" hidden></p>
+            <button class="button primary" type="submit">Sign In</button>
+          </form>
+        </section>
+      </main>
+
+      <footer class="siteFooter">
+        <span>&copy; <span data-current-year></span> Dana Briner</span>
+      </footer>
+    </div>
+    <script src="assets/app.js"></script>
+  </body>
+</html>
