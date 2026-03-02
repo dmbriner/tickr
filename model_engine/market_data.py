@@ -11,6 +11,7 @@ YAHOO_SEARCH_URL = "https://query1.finance.yahoo.com/v1/finance/search"
 YAHOO_QUOTE_SUMMARY_URL = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{symbol}"
 FMP_V3_BASE_URL = "https://financialmodelingprep.com/api/v3"
 FMP_V4_BASE_URL = "https://financialmodelingprep.com/api/v4"
+AV_BASE_URL = "https://www.alphavantage.co/query"
 DEFAULT_TIMEOUT = 8
 
 
@@ -118,6 +119,46 @@ def fmp_enabled() -> bool:
     return bool(fmp_api_key())
 
 
+def alpha_vantage_api_key() -> str | None:
+    return os.getenv("ALPHA_VANTAGE_API_KEY")
+
+
+def _av_search(query: str, limit: int = 8) -> list[CompanySearchResult]:
+    """Search via Alpha Vantage SYMBOL_SEARCH endpoint."""
+    api_key = alpha_vantage_api_key()
+    if not api_key:
+        return []
+    try:
+        response = _session().get(
+            AV_BASE_URL,
+            params={"function": "SYMBOL_SEARCH", "keywords": query, "apikey": api_key},
+            timeout=DEFAULT_TIMEOUT,
+        )
+        response.raise_for_status()
+        data = response.json()
+        results = []
+        for match in data.get("bestMatches", [])[:limit]:
+            symbol = match.get("1. symbol", "").upper()
+            if not symbol:
+                continue
+            region = match.get("4. region", "")
+            match_type = match.get("3. type", "Equity")
+            if match_type not in ("Equity", "ETF"):
+                continue
+            results.append(
+                CompanySearchResult(
+                    symbol=symbol,
+                    name=match.get("2. name") or symbol,
+                    exchange=region,
+                    quote_type=match_type,
+                    logo_url=_ticker_logo(symbol),
+                )
+            )
+        return results
+    except Exception:
+        return []
+
+
 def _logo_from_website(website: str | None) -> str | None:
     if not website:
         return None
@@ -180,6 +221,12 @@ def search_companies(query: str, limit: int = 8) -> list[CompanySearchResult]:
         except Exception:
             pass
 
+    # Try Alpha Vantage search (reliable, no FMP key needed)
+    av_results = _av_search(query, limit)
+    if av_results:
+        return av_results
+
+    # Fall back to Yahoo Finance search
     try:
         response = _session().get(
             YAHOO_SEARCH_URL,
@@ -196,22 +243,13 @@ def search_companies(query: str, limit: int = 8) -> list[CompanySearchResult]:
         symbol = quote.get("symbol")
         if not symbol:
             continue
-        website = None
-        logo_url = None
-        try:
-            profile = resolve_company_profile(symbol, fallback_name=quote.get("shortname") or quote.get("longname"))
-            website = profile.website
-            logo_url = profile.logo_url
-        except Exception:
-            pass
         results.append(
             CompanySearchResult(
                 symbol=symbol.upper(),
                 name=quote.get("shortname") or quote.get("longname") or symbol.upper(),
                 exchange=quote.get("exchDisp") or quote.get("exchange") or "",
                 quote_type=quote.get("quoteType") or quote.get("typeDisp") or "",
-                logo_url=logo_url or _ticker_logo(symbol),
-                website=website,
+                logo_url=_ticker_logo(symbol),
             )
         )
     return results[:limit]

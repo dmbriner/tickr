@@ -118,52 +118,64 @@ h1, h2, h3, h4 {
 }
 
 /* ── Buttons ── */
-.stButton > button {
-    font-family: 'Lora', Georgia, serif;
-    font-weight: 500;
-    border-radius: 8px;
-    border: 1px solid var(--line);
-    background: var(--panel);
-    color: var(--ink);
-    padding: 0.42rem 1rem;
-    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+.stButton > button,
+.stButton button {
+    font-family: 'Lora', Georgia, serif !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--line) !important;
+    background: var(--panel) !important;
+    color: var(--ink) !important;
+    padding: 0.38rem 0.75rem !important;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s !important;
+    white-space: nowrap !important;
 }
 
-.stButton > button:hover {
-    background: #e8edf4;
-    border-color: #b0bec8;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+.stButton > button:hover,
+.stButton button:hover {
+    background: #e8edf4 !important;
+    border-color: #b0bec8 !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
 }
 
+/* Primary buttons — Analyze Company, Enter Platform */
 .stButton > button[kind="primary"],
-.stButton > button[data-testid="baseButton-primary"] {
-    background: var(--accent);
-    color: #ffffff;
-    border-color: var(--accent);
+.stButton > button[data-testid="baseButton-primary"],
+.stButton button[data-baseweb="button"][kind="primary"] {
+    background: var(--accent) !important;
+    color: #ffffff !important;
+    border-color: var(--accent) !important;
 }
 
 .stButton > button[kind="primary"]:hover,
 .stButton > button[data-testid="baseButton-primary"]:hover {
-    background: var(--accent-hover);
-    border-color: var(--accent-hover);
-    box-shadow: 0 4px 14px rgba(15, 76, 129, 0.25);
+    background: var(--accent-hover) !important;
+    border-color: var(--accent-hover) !important;
+    box-shadow: 0 4px 14px rgba(15, 76, 129, 0.25) !important;
 }
 
-.stDownloadButton > button {
-    font-family: 'Lora', Georgia, serif;
-    background: var(--success);
-    color: #ffffff;
-    border: 1px solid var(--success);
-    border-radius: 8px;
-    font-weight: 500;
-    padding: 0.42rem 1rem;
-    transition: background 0.15s, box-shadow 0.15s;
+/* Secondary buttons in sidebar — Clear selection, small actions */
+[data-testid="stSidebar"] .stButton > button {
+    font-size: 0.82rem !important;
+    padding: 0.3rem 0.5rem !important;
+}
+
+.stDownloadButton > button,
+.stDownloadButton button {
+    font-family: 'Lora', Georgia, serif !important;
+    background: var(--success) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--success) !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    padding: 0.42rem 1rem !important;
+    transition: background 0.15s, box-shadow 0.15s !important;
 }
 
 .stDownloadButton > button:hover {
-    background: #126832;
-    border-color: #126832;
-    box-shadow: 0 4px 14px rgba(21, 128, 61, 0.25);
+    background: #126832 !important;
+    border-color: #126832 !important;
+    box-shadow: 0 4px 14px rgba(21, 128, 61, 0.25) !important;
 }
 
 /* ── Hero ── */
@@ -592,19 +604,17 @@ def _auth_gate() -> bool:
 
 def _sidebar_search() -> tuple[str, bytes | None, bool]:
     with st.sidebar:
-        st.markdown("## Equity Research")
-        st.caption("Search any public company to load live data and begin modeling.")
         if _access_password():
             state = "Unlocked" if st.session_state.get("is_authenticated") else "Locked"
             st.caption(f"Access: {state}")
-        st.divider()
+
         st.markdown(
             """
-            <div style="background:#0f4c81;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.75rem;">
-                <div style="color:#ffffff;font-family:'Playfair Display',Georgia,serif;font-size:1rem;font-weight:600;letter-spacing:0.01em;">
+            <div style="background:#e8f0f9;border:1px solid #b8cfe0;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.6rem;">
+                <div style="color:#0f4c81;font-family:'Playfair Display',Georgia,serif;font-size:1rem;font-weight:600;letter-spacing:0.01em;">
                     Search any public company
                 </div>
-                <div style="color:rgba(255,255,255,0.78);font-size:0.82rem;margin-top:0.2rem;">
+                <div style="color:#4e5d6c;font-size:0.82rem;margin-top:0.2rem;">
                     Enter a name or ticker symbol below
                 </div>
             </div>
@@ -624,21 +634,40 @@ def _sidebar_search() -> tuple[str, bytes | None, bool]:
 
         for idx, result in enumerate(results[:6]):
             with st.container(border=True):
-                cols = st.columns([1, 4, 1])
+                cols = st.columns([1, 3, 1.2])
                 with cols[0]:
                     if result.logo_url:
-                        st.image(result.logo_url, width=28)
+                        try:
+                            st.image(result.logo_url, width=30)
+                        except Exception:
+                            pass
                 with cols[1]:
                     st.markdown(f"**{result.name or result.symbol}**")
                     st.caption(f"{result.symbol} • {result.exchange}")
                 with cols[2]:
-                    if st.button("Use", key=f"use_{result.symbol}_{idx}", use_container_width=True):
+                    if st.button("Use ›", key=f"use_{result.symbol}_{idx}", use_container_width=True):
                         st.session_state["selected_ticker"] = result.symbol
 
-        st.divider()
-        ticker = st.text_input("Selected ticker", value=st.session_state.get("selected_ticker", ""), placeholder="e.g. AAPL, MSFT, NVDA").upper()
-        st.session_state["selected_ticker"] = ticker
+        # Single source of truth: prefer explicitly selected ticker, else use typed query
+        selected = st.session_state.get("selected_ticker", "")
+        if selected:
+            st.markdown(
+                f"""
+                <div style="background:#e8f0f9;border:1px solid #b8cfe0;border-radius:8px;padding:0.45rem 0.75rem;margin:0.4rem 0 0.2rem;">
+                    <span style="font-size:0.75rem;color:#4e5d6c;font-family:'Lora',Georgia,serif;">Selected</span>
+                    <span style="font-size:0.95rem;font-weight:600;color:#0f4c81;font-family:'Playfair Display',Georgia,serif;margin-left:0.4rem;">{selected}</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            if st.button("Clear selection", key="clear_ticker", use_container_width=True):
+                st.session_state["selected_ticker"] = ""
+                st.rerun()
+            ticker = selected
+        else:
+            ticker = query.strip().upper()
 
+        st.divider()
         uploaded = st.file_uploader(
             "Or upload historical CSV",
             type=["csv"],
@@ -1397,9 +1426,21 @@ def _render_export_button(outputs: dict, hist_df: pd.DataFrame, base_asm: ModelA
     )
 
 
+def _inject_secrets() -> None:
+    """Expose Streamlit secrets as environment variables so model_engine modules can read them."""
+    _SECRET_KEYS = ("FMP_API_KEY", "FINANCIAL_MODELING_PREP_API_KEY", "ALPHA_VANTAGE_API_KEY", "APP_ACCESS_PASSWORD")
+    try:
+        for key in _SECRET_KEYS:
+            if key in st.secrets and not os.getenv(key):
+                os.environ[key] = str(st.secrets[key])
+    except Exception:
+        pass
+
+
 def main() -> None:
     st.set_page_config(page_title="3-Statement Model", layout="wide", initial_sidebar_state="expanded")
     st.markdown(APP_CSS, unsafe_allow_html=True)
+    _inject_secrets()
     _init_session_state()
     if not _auth_gate():
         return
