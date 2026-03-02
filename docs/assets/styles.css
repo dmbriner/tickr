@@ -257,6 +257,10 @@ input {
   color: var(--muted);
 }
 
+.authModeRow {
+  margin: 22px 0 18px;
+}
+
 .privateState {
   display: grid;
   gap: 16px;
@@ -269,9 +273,19 @@ input {
   font-size: 0.95rem;
 }
 
+.inlineSuccess {
+  margin: 0;
+  color: #2e7d4f;
+  font-size: 0.95rem;
+}
+
 @media (prefers-color-scheme: dark) {
   .inlineError {
     color: #ff9d9d;
+  }
+
+  .inlineSuccess {
+    color: #9de0b4;
   }
 }
 

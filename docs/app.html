@@ -18,7 +18,7 @@
 
       <main class="authWrap">
         <section class="authCard surface">
-          <h1>Authenticated</h1>
+          <h1>Your Tickr Account</h1>
           <p id="app-status" class="statusText">Checking session...</p>
           <div id="private-state" class="privateState" hidden>
             <div class="fieldReadout">
@@ -29,6 +29,14 @@
               <span>Status</span>
               <strong id="private-ok"></strong>
             </div>
+            <div class="fieldReadout">
+              <span>Saved API Profiles</span>
+              <strong id="private-profiles-count"></strong>
+            </div>
+            <div class="fieldReadout">
+              <span>Saved Analyses</span>
+              <strong id="private-analyses-count"></strong>
+            </div>
           </div>
           <p id="app-error" class="inlineError" role="alert" hidden></p>
         </section>
@@ -38,6 +46,7 @@
         <span>&copy; <span data-current-year></span> Dana Briner</span>
       </footer>
     </div>
+    <script src="assets/config.js"></script>
     <script src="assets/app.js"></script>
   </body>
 </html>

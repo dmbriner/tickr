@@ -12,15 +12,13 @@ class Settings(BaseSettings):
 
     app_name: str = "Tickr API"
     api_prefix: str = "/api"
-    cors_origins: list[str] = Field(default=["http://localhost:3000"])
+    cors_origins: list[str] = Field(default=["http://localhost:3000", "http://127.0.0.1:3000", "https://dmbriner.github.io"])
     cors_origin_regex: str | None = None
 
     database_url: str = Field(default="postgresql+psycopg://postgres:postgres@localhost:5432/statement_model")
 
-    auth_provider: str = Field(default="clerk")
-    clerk_secret_key: str | None = None
-    clerk_publishable_key: str | None = None
-    clerk_jwt_issuer: str | None = None
+    jwt_secret: str = Field(default="change-me-in-production")
+    jwt_expires_minutes: int = Field(default=120)
 
     alpha_vantage_api_key: str | None = None
     fmp_api_key: str | None = None

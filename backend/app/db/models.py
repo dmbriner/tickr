@@ -13,7 +13,8 @@ class User(Base):
 
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
     email: Mapped[str | None] = mapped_column(String(255), unique=True)
-    auth_provider: Mapped[str] = mapped_column(String(32), default="clerk")
+    password_hash: Mapped[str | None] = mapped_column(String(255))
+    auth_provider: Mapped[str] = mapped_column(String(32), default="password")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     api_profiles: Mapped[list["ApiProfile"]] = relationship(back_populates="user")

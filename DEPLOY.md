@@ -2,30 +2,32 @@
 
 ## Goal
 
-Deploy the app as:
+Deploy:
 
-- frontend on `Vercel`
-- backend on `Railway`
-- optional frontend path prefix `/tickr`
-
-## Repo rename
-
-Rename the GitHub repo itself to `tickr` if you want the project branding to match.
-
-You cannot rename a repo to `dmbriner.github.io/tickr`. That string is a site path, not a valid repo name.
+- frontend on GitHub Pages at `https://dmbriner.github.io/tickr/`
+- backend on Railway
+- auth and saved data through the Railway API
 
 ## 1. Create the database
 
-Create a Postgres instance and copy `DATABASE_URL`.
+Create a Railway Postgres instance and copy `DATABASE_URL`.
 
-## 2. Configure local secrets
+## 2. Configure backend secrets
 
-Create and fill:
+Set these Railway variables:
 
-- `frontend/.env`
-- `backend/.env`
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `JWT_EXPIRES_MINUTES`
+- `CORS_ORIGINS`
+- `ALPHA_VANTAGE_API_KEY`
+- `FMP_API_KEY`
 
-Use [`frontend/.env.example`](/Users/danabriner/Desktop/Extracurriculars/Projects/Python%203%20Statement%20Model/python-3statement-model/frontend/.env.example) and [`backend/.env.example`](/Users/danabriner/Desktop/Extracurriculars/Projects/Python%203%20Statement%20Model/python-3statement-model/backend/.env.example) as templates.
+Recommended `CORS_ORIGINS`:
+
+```text
+https://dmbriner.github.io,http://localhost:3000,http://127.0.0.1:3000
+```
 
 ## 3. Run migrations
 
@@ -36,58 +38,29 @@ alembic upgrade head
 
 ## 4. Deploy the backend to Railway
 
-Backend service settings:
+Use the repo root in Railway.
 
-- Root Directory: repo root
 - Build Command: `pip install -r backend/requirements.txt`
 - Start Command: `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Healthcheck Path: `/healthz`
 
-This app imports the shared [`model_engine/`](/Users/danabriner/Desktop/Extracurriculars/Projects/Python%203%20Statement%20Model/python-3statement-model/model_engine) package from the repo root, so Railway should deploy the whole repo rather than only the `backend/` folder.
+## 5. Point GitHub Pages to Railway
 
-Backend variables:
+Update:
 
-- `DATABASE_URL`
-- `CLERK_SECRET_KEY`
-- `CLERK_PUBLISHABLE_KEY`
-- `CLERK_JWT_ISSUER`
-- `ALPHA_VANTAGE_API_KEY`
-- `FMP_API_KEY`
-- `CORS_ORIGINS`
-- `CORS_ORIGIN_REGEX`
+- `docs/assets/config.js`
 
-Suggested CORS values:
+Set:
 
-- `CORS_ORIGINS=https://your-frontend.vercel.app`
-- `CORS_ORIGIN_REGEX=https://.*\.vercel\.app`
+```js
+window.TICKR_BACKEND_URL = "https://your-backend.up.railway.app";
+```
 
-## 5. Deploy the frontend to Vercel
+Then commit and push so GitHub Pages serves the updated frontend.
 
-Frontend project settings:
+## 6. Verify
 
-- Framework: `Next.js`
-- Root Directory: `frontend`
-
-Frontend variables:
-
-- `NEXT_PUBLIC_API_BASE_URL=https://your-backend.up.railway.app/api`
-- `NEXT_PUBLIC_APP_NAME=Tickr`
-- `NEXT_PUBLIC_BASE_PATH=/tickr`
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...`
-- `CLERK_SECRET_KEY=sk_...`
-
-## 6. Portfolio path reality
-
-If your portfolio stays on `GitHub Pages` at `dmbriner.github.io`, it cannot directly host this full app at `/tickr`.
-
-What this code change does give you:
-
-- the frontend can now be built to run from `/tickr`
-- you can mount it there later on a platform that supports path-based routing and rewrites
-
-## 7. Verify
-
-- `https://your-frontend.vercel.app/tickr`
+- `https://dmbriner.github.io/tickr/`
 - `https://your-backend.up.railway.app/healthz`
-- sign in through Clerk
-- create an API profile
-- create a saved analysis
+- sign up on `https://dmbriner.github.io/tickr/login.html`
+- sign in and confirm the account page loads

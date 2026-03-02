@@ -1,29 +1,4 @@
 services:
-  caddy:
-    image: caddy:2.10
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      DOMAIN: ${DOMAIN}
-    volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - frontend
-      - backend
-
-  frontend:
-    build:
-      context: ./frontend
-    restart: unless-stopped
-    env_file:
-      - ./frontend/.env
-    depends_on:
-      - backend
-
   backend:
     build:
       context: .
@@ -46,5 +21,3 @@ services:
 
 volumes:
   postgres_data:
-  caddy_data:
-  caddy_config:

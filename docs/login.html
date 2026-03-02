@@ -18,7 +18,12 @@
 
       <main class="authWrap">
         <section class="authCard surface">
-          <h1>Login</h1>
+          <h1>Account Access</h1>
+          <p class="statusText">Create an account or sign in to access Tickr and save your data.</p>
+          <div class="buttonRow authModeRow" role="tablist" aria-label="Authentication mode">
+            <button id="login-mode-button" class="button secondary" type="button">Sign In</button>
+            <button id="signup-mode-button" class="button secondary" type="button">Sign Up</button>
+          </div>
           <form id="login-form" class="formStack" novalidate>
             <label class="field">
               <span>Email</span>
@@ -26,10 +31,21 @@
             </label>
             <label class="field">
               <span>Password</span>
-              <input id="password" name="password" type="password" autocomplete="current-password" required />
+              <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" />
+            </label>
+            <label id="confirm-password-field" class="field" hidden>
+              <span>Confirm Password</span>
+              <input
+                id="confirm-password"
+                name="confirmPassword"
+                type="password"
+                autocomplete="new-password"
+                minlength="8"
+              />
             </label>
             <p id="login-error" class="inlineError" role="alert" hidden></p>
-            <button class="button primary" type="submit">Sign In</button>
+            <p id="login-success" class="inlineSuccess" role="status" hidden></p>
+            <button id="auth-submit" class="button primary" type="submit">Sign In</button>
           </form>
         </section>
       </main>
@@ -38,6 +54,7 @@
         <span>&copy; <span data-current-year></span> Dana Briner</span>
       </footer>
     </div>
+    <script src="assets/config.js"></script>
     <script src="assets/app.js"></script>
   </body>
 </html>

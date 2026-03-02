@@ -1,7 +1,8 @@
 create table if not exists users (
   id varchar(128) primary key,
   email varchar(255) unique,
-  auth_provider varchar(32) not null default 'clerk',
+  password_hash varchar(255),
+  auth_provider varchar(32) not null default 'password',
   created_at timestamptz not null default now()
 );
 
